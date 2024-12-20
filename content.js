@@ -5,20 +5,27 @@ fetch(chrome.runtime.getURL('keywords.json'))
   .then(response => response.json())
   .then(keywordPairs => {
     console.log("Keywords loaded:", keywordPairs);
-    // 替換一次關鍵字
-    replaceKeywords(keywordPairs);
-    
-    // 註冊監聽每個按鈕的點擊事件
+
+    // 註冊每隔10秒檢查一次的定時器
+    setInterval(async () => {
+      console.log("Checking for keyword replacements...");
+      await replaceKeywords(keywordPairs);
+    }, 10000);  // 10秒鐘檢查一次
+
+    // 註冊滾動事件和按鈕點擊事件處理
     registerButtonClickListener(keywordPairs);
+    registerScrollListener(keywordPairs);
   })
   .catch(error => {
     console.error("Error loading keywords.json:", error);
   });
 
 // 函數：替換關鍵字
-function replaceKeywords(keywordPairs) {
+async function replaceKeywords(keywordPairs) {
   console.log("Starting keyword replacement...");
-  replaceKeywordsInDocument(document, keywordPairs);
+
+  // 使用分批處理方法替換關鍵字
+  await replaceKeywordsInDocument(document, keywordPairs);
 
   // 處理 iframe 中的文本
   const iframes = document.getElementsByTagName('iframe');
@@ -27,7 +34,7 @@ function replaceKeywords(keywordPairs) {
     try {
       const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
       if (iframeDocument) {
-        replaceKeywordsInDocument(iframeDocument, keywordPairs);
+        await replaceKeywordsInDocument(iframeDocument, keywordPairs);
       }
     } catch (e) {
       console.log('Cannot access iframe content', e);
@@ -35,29 +42,43 @@ function replaceKeywords(keywordPairs) {
   }
 }
 
-// 函數：替換頁面上的文本
+// 函數：替換頁面上的文本（分批處理）
 function replaceKeywordsInDocument(doc, keywordPairs) {
-  setTimeout(() => {
-    console.log("Starting to replace keywords in document...");
+  return new Promise((resolve) => {
     const textNodes = getTextNodes(doc.body);
     console.log("Found text nodes:", textNodes.length);
 
-    textNodes.forEach((node) => {
-      let text = node.nodeValue;
-      for (let original in keywordPairs) {
-        const replacement = keywordPairs[original];
-        const regex = new RegExp(`\\b${original}\\b`, 'gi');
-        if (regex.test(text)) {  // 確保只有有匹配的才進行替換
-          console.log(`Replacing: ${original} -> ${replacement}`);
-          text = text.replace(regex, replacement);
+    let batchSize = 50; // 每批處理50個節點
+    let index = 0;
+
+    function processBatch() {
+      const end = Math.min(index + batchSize, textNodes.length);
+      for (; index < end; index++) {
+        const node = textNodes[index];
+        let text = node.nodeValue;
+        for (let original in keywordPairs) {
+          const replacement = keywordPairs[original];
+          const regex = new RegExp(`\\b${original}\\b`, 'gi');
+          if (regex.test(text)) {
+            text = text.replace(regex, replacement);
+          }
+        }
+        if (text !== node.nodeValue) {
+          node.nodeValue = text;
         }
       }
-      if (text !== node.nodeValue) {
-        node.nodeValue = text;
-        console.log("Text replaced:", node.nodeValue);
+
+      if (index < textNodes.length) {
+        // 如果還有更多節點需要處理，請求下一個空閒時段繼續處理
+        requestIdleCallback(processBatch);
+      } else {
+        resolve(); // 所有節點處理完成後，解決 Promise
       }
-    });
-  }, 3000);
+    }
+
+    // 開始分批處理
+    requestIdleCallback(processBatch);
+  });
 }
 
 // 遍歷 DOM 取得所有文本節點
@@ -96,4 +117,22 @@ function registerButtonClickListener(keywordPairs) {
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// 註冊滾動事件處理器來在滾動時觸發刷新
+let isScrolling = false;
+
+function registerScrollListener(keywordPairs) {
+  window.addEventListener('scroll', function () {
+    if (!isScrolling) {
+      isScrolling = true;
+      console.log("Scroll detected. Replacing keywords...");
+      
+      // 使用防抖技術，等待滾動停止後再觸發
+      setTimeout(async () => {
+        await replaceKeywords(keywordPairs);
+        isScrolling = false;
+      }, 200);  // 200 毫秒延遲
+    }
+  });
 }

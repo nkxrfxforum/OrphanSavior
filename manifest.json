@@ -22,7 +22,7 @@
   "web_accessible_resources": [
     {
       "resources": ["keywords.json"],
-      "matches": ["<all_urls>"]
+      "matches": ["https://pathofexile.tw/*"]
     }
   ]
 }
