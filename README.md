@@ -8,3 +8,7 @@ POE2，台服市集找不到角色，暫時使用。
 ![image](https://github.com/user-attachments/assets/013c8b60-89bd-41a0-b24b-1028249cb699)
 更新方式
 ![image](https://github.com/user-attachments/assets/2238c15f-69ab-4f67-bb2a-a0928530258b)
+
+如何移除
+
+![image](https://github.com/user-attachments/assets/2673b7c2-8ccb-4cdd-acc6-2ab472264b53)
