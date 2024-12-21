@@ -9,6 +9,13 @@ POE2，台服市集找不到角色，暫時使用。
 更新方式
 ![image](https://github.com/user-attachments/assets/2238c15f-69ab-4f67-bb2a-a0928530258b)
 
+Q.更新後，但ID還是沒抓到(請清除快取，清除快取)
+
+![image](https://github.com/user-attachments/assets/474d0be6-38b5-41fb-9482-a31484d665cb)
+
+
 如何移除
 
 ![image](https://github.com/user-attachments/assets/2673b7c2-8ccb-4cdd-acc6-2ab472264b53)
+
+
